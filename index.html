@@ -12,6 +12,32 @@
             <h1 class="game-title">SHADOW COMBAT</h1>
             <p class="subtitle">A tale of darkness and steel</p>
             <button id="start-btn" class="shadow-btn">ENTER THE SHADOWS</button>
+        </div>
+        
+        <div id="character-select" class="hidden">
+            <h1 class="select-title">CHOOSE YOUR WARRIOR</h1>
+            <div class="character-options">
+                <div class="character-card" id="char-solar">
+                    <div class="char-preview solar-preview"></div>
+                    <h2>SOLAR WARRIOR</h2>
+                    <p class="char-ability">Special: SOLAR BEAM</p>
+                    <p class="char-desc">Unleashes devastating energy beam that cannot be blocked</p>
+                    <div class="char-stats">
+                        <span>⚡ Range: Far</span>
+                        <span>💥 Power: High</span>
+                    </div>
+                </div>
+                <div class="character-card" id="char-earth">
+                    <div class="char-preview earth-preview"></div>
+                    <h2>EARTH WARRIOR</h2>
+                    <p class="char-ability">Special: EARTHQUAKE</p>
+                    <p class="char-desc">Slams the ground causing massive tremors that cannot be blocked</p>
+                    <div class="char-stats">
+                        <span>🌍 Range: Full</span>
+                        <span>💥 Power: High</span>
+                    </div>
+                </div>
+            </div>
             <div class="controls-info">
                 <h3>CONTROLS</h3>
                 <p><span class="key">W / SPACE</span> Jump</p>
@@ -21,10 +47,9 @@
                 <p><span class="key">LEFT CLICK</span> Sword Slash</p>
                 <p><span class="key">RIGHT CLICK</span> Flying Kick</p>
                 <p><span class="key">SHIFT+CLICK</span> Power Slash</p>
-                <p><span class="key">RAPID CLICK</span> Combo Attack</p>
                 <p><span class="key">Q</span> Flying Kick</p>
                 <p><span class="key">E</span> Uppercut</p>
-                <p><span class="key">R</span> Solar Beam (100%)</p>
+                <p><span class="key">R</span> Special Attack (100%)</p>
             </div>
         </div>
         
@@ -51,7 +76,7 @@
             
             <!-- Boost Attack Meter -->
             <div id="boost-container">
-                <div class="boost-label">SOLAR BEAM</div>
+                <div class="boost-label" id="boost-label">SPECIAL</div>
                 <div class="boost-meter">
                     <div id="boost-fill" class="boost-fill"></div>
                     <span id="boost-text">0%</span>

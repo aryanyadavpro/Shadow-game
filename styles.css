@@ -149,6 +149,143 @@ body {
     font-size: 0.75rem;
 }
 
+/* Character Selection Screen */
+#character-select {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background: radial-gradient(ellipse at center, #4a4a5e 0%, #2a2a3a 70%);
+    padding: 20px;
+}
+
+#character-select.hidden {
+    display: none;
+}
+
+.select-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    letter-spacing: 10px;
+    margin-bottom: 40px;
+}
+
+.character-options {
+    display: flex;
+    gap: 50px;
+    margin-bottom: 30px;
+}
+
+.character-card {
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border: 3px solid #444;
+    border-radius: 15px;
+    padding: 25px;
+    width: 280px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.character-card:hover {
+    border-color: #888;
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+}
+
+.character-card.selected {
+    border-color: #fff;
+    box-shadow: 0 0 50px rgba(255, 255, 255, 0.4);
+}
+
+.char-preview {
+    width: 150px;
+    height: 180px;
+    margin: 0 auto 20px;
+    background: #1a1a2a;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.solar-preview::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 120px;
+    background: #0a0a0a;
+    border-radius: 5px;
+}
+
+.solar-preview::after {
+    content: '☀️';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem;
+}
+
+.earth-preview::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 120px;
+    background: #0a0a0a;
+    border-radius: 5px;
+}
+
+.earth-preview::after {
+    content: '🌍';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem;
+}
+
+.character-card h2 {
+    color: #fff;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+}
+
+.char-ability {
+    color: #ffd700;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.char-desc {
+    color: #888;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 15px;
+}
+
+.char-stats {
+    display: flex;
+    justify-content: space-around;
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+#character-select .controls-info {
+    margin-top: 20px;
+    transform: scale(0.9);
+}
+
 /* Game Screen */
 #game-screen {
     height: 100%;

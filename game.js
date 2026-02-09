@@ -42,8 +42,17 @@ const AttackType = {
     COMBO: 'combo',
     UPPERCUT: 'uppercut',
     KO_STRIKE: 'ko_strike',
-    SOLAR_BEAM: 'solar_beam'
+    SOLAR_BEAM: 'solar_beam',
+    EARTHQUAKE: 'earthquake'
 };
+
+// Character Types
+const CharacterType = {
+    SOLAR: 'solar',
+    EARTH: 'earth'
+};
+
+let selectedCharacter = CharacterType.SOLAR;
 
 // Game Constants
 const GRAVITY = 0.7;
@@ -52,8 +61,9 @@ const MAX_HEALTH = 500;
 
 // Fighter Class
 class Fighter {
-    constructor(x, isPlayer = true) {
+    constructor(x, isPlayer = true, characterType = CharacterType.SOLAR) {
         this.isPlayer = isPlayer;
+        this.characterType = characterType;
         this.x = x;
         this.y = 0;
         this.width = 60;
@@ -120,8 +130,16 @@ class Fighter {
             [AttackType.COMBO]: { damage: 12, range: 100, duration: 25 },
             [AttackType.UPPERCUT]: { damage: 14, range: 80, duration: 25 },
             [AttackType.KO_STRIKE]: { damage: 30, range: 130, duration: 45 },
-            [AttackType.SOLAR_BEAM]: { damage: 50, range: 2000, duration: 180 }
+            [AttackType.SOLAR_BEAM]: { damage: 50, range: 2000, duration: 180 },
+            [AttackType.EARTHQUAKE]: { damage: 50, range: 2000, duration: 150 }
         };
+        
+        // Special attack type based on character
+        this.specialAttack = characterType === CharacterType.SOLAR ? AttackType.SOLAR_BEAM : AttackType.EARTHQUAKE;
+        
+        // Earthquake specific properties
+        this.earthquakePhase = 0;  // 0: none, 1: jumping, 2: slamming, 3: shaking
+        this.earthquakeShakeIntensity = 0;
         
         // Visual properties - Classic samurai style
         this.shadowColor = '#0a0a0a';
@@ -178,6 +196,16 @@ class Fighter {
             return {
                 x: this.facingRight ? this.x + this.width : this.x - canvas.width,
                 y: this.y - 50,
+                width: canvas.width,
+                height: 200
+            };
+        }
+        
+        // Earthquake covers entire ground area
+        if (this.currentAttack === AttackType.EARTHQUAKE) {
+            return {
+                x: 0,
+                y: canvas.height * GROUND_Y - 50,
                 width: canvas.width,
                 height: 200
             };
@@ -374,6 +402,9 @@ class Fighter {
                 break;
             case AttackType.SOLAR_BEAM:
                 this.setSolarBeamPose();
+                break;
+            case AttackType.EARTHQUAKE:
+                this.setEarthquakePose();
                 break;
             case 'stunned':
                 this.setStunnedPose();
@@ -866,13 +897,112 @@ class Fighter {
         this.swordAngle = Math.PI * 0.75; // Sword aside during beam
     }
     
+    setEarthquakePose() {
+        const stats = this.attackStats[AttackType.EARTHQUAKE];
+        const progress = this.attackFrame / stats.duration;
+        
+        if (progress < 0.20) {
+            // Phase 1: Jumping up
+            const t = progress / 0.20;
+            const jumpHeight = Math.sin(t * Math.PI * 0.5) * 80;
+            
+            this.bodyParts.torso = { x: 0, y: 55 - jumpHeight, rotation: -0.1 };
+            this.bodyParts.head = { x: 0, y: 20 - jumpHeight, rotation: -0.15 };
+            
+            // Arms raised
+            this.bodyParts.shoulder_r = { x: 20, y: 30 - jumpHeight, rotation: -Math.PI * 0.5 };
+            this.bodyParts.elbow_r = { x: 25, y: 10 - jumpHeight, rotation: -Math.PI * 0.3 };
+            this.bodyParts.hand_r = { x: 30, y: -10 - jumpHeight, rotation: 0 };
+            
+            this.bodyParts.shoulder_l = { x: -20, y: 30 - jumpHeight, rotation: Math.PI * 0.5 };
+            this.bodyParts.elbow_l = { x: -25, y: 10 - jumpHeight, rotation: Math.PI * 0.3 };
+            this.bodyParts.hand_l = { x: -30, y: -10 - jumpHeight, rotation: 0 };
+            
+            // Legs tucked
+            this.bodyParts.hip_r = { x: 10, y: 80 - jumpHeight, rotation: -Math.PI * 0.3 };
+            this.bodyParts.knee_r = { x: 20, y: 95 - jumpHeight, rotation: Math.PI * 0.5 };
+            this.bodyParts.foot_r = { x: 15, y: 110 - jumpHeight, rotation: 0 };
+            
+            this.bodyParts.hip_l = { x: -10, y: 80 - jumpHeight, rotation: Math.PI * 0.3 };
+            this.bodyParts.knee_l = { x: -20, y: 95 - jumpHeight, rotation: -Math.PI * 0.5 };
+            this.bodyParts.foot_l = { x: -15, y: 110 - jumpHeight, rotation: 0 };
+            
+            this.swordAngle = -Math.PI * 0.5;
+        } else if (progress < 0.30) {
+            // Phase 2: Slamming down
+            const t = (progress - 0.20) / 0.10;
+            const slamY = 80 * (1 - t);
+            
+            this.bodyParts.torso = { x: 0, y: 55 - slamY, rotation: 0.2 };
+            this.bodyParts.head = { x: 0, y: 20 - slamY, rotation: 0.25 };
+            
+            // Arms slamming down
+            this.bodyParts.shoulder_r = { x: 20, y: 30 - slamY, rotation: Math.PI * 0.4 };
+            this.bodyParts.elbow_r = { x: 35, y: 60 - slamY, rotation: Math.PI * 0.3 };
+            this.bodyParts.hand_r = { x: 40, y: 90 - slamY, rotation: Math.PI * 0.5 };
+            
+            this.bodyParts.shoulder_l = { x: -20, y: 30 - slamY, rotation: -Math.PI * 0.4 };
+            this.bodyParts.elbow_l = { x: -35, y: 60 - slamY, rotation: -Math.PI * 0.3 };
+            this.bodyParts.hand_l = { x: -40, y: 90 - slamY, rotation: -Math.PI * 0.5 };
+            
+            // Legs extending
+            this.bodyParts.hip_r = { x: 15, y: 80 - slamY, rotation: Math.PI * 0.15 };
+            this.bodyParts.knee_r = { x: 25, y: 115 - slamY, rotation: Math.PI * 0.1 };
+            this.bodyParts.foot_r = { x: 30, y: 145 - slamY, rotation: 0 };
+            
+            this.bodyParts.hip_l = { x: -15, y: 80 - slamY, rotation: -Math.PI * 0.15 };
+            this.bodyParts.knee_l = { x: -25, y: 115 - slamY, rotation: -Math.PI * 0.1 };
+            this.bodyParts.foot_l = { x: -30, y: 145 - slamY, rotation: 0 };
+            
+            this.swordAngle = Math.PI * 0.5;
+        } else {
+            // Phase 3: Ground slam - shaking
+            const shakeIntensity = Math.max(0, 1 - (progress - 0.30) / 0.70);
+            const shake = Math.sin(this.attackFrame * 1.5) * 4 * shakeIntensity;
+            
+            this.bodyParts.torso = { x: shake, y: 60, rotation: 0.15 };
+            this.bodyParts.head = { x: shake, y: 25, rotation: 0.1 };
+            
+            // Arms on ground
+            this.bodyParts.shoulder_r = { x: 25 + shake, y: 45, rotation: Math.PI * 0.6 };
+            this.bodyParts.elbow_r = { x: 45 + shake, y: 75, rotation: Math.PI * 0.4 };
+            this.bodyParts.hand_r = { x: 55 + shake, y: 100, rotation: Math.PI * 0.5 };
+            
+            this.bodyParts.shoulder_l = { x: -25 + shake, y: 45, rotation: -Math.PI * 0.6 };
+            this.bodyParts.elbow_l = { x: -45 + shake, y: 75, rotation: -Math.PI * 0.4 };
+            this.bodyParts.hand_l = { x: -55 + shake, y: 100, rotation: -Math.PI * 0.5 };
+            
+            // Wide stance
+            this.bodyParts.hip_r = { x: 18 + shake, y: 85, rotation: Math.PI * 0.25 };
+            this.bodyParts.knee_r = { x: 35 + shake, y: 115, rotation: Math.PI * 0.2 };
+            this.bodyParts.foot_r = { x: 45 + shake, y: 145, rotation: 0 };
+            
+            this.bodyParts.hip_l = { x: -18 + shake, y: 85, rotation: -Math.PI * 0.25 };
+            this.bodyParts.knee_l = { x: -35 + shake, y: 115, rotation: -Math.PI * 0.2 };
+            this.bodyParts.foot_l = { x: -45 + shake, y: 145, rotation: 0 };
+            
+            this.swordAngle = Math.PI * 0.8;
+            this.earthquakeShakeIntensity = shakeIntensity;
+        }
+    }
+    
     attack(type = AttackType.SLASH) {
         if (this.attackCooldown > 0 || this.isAttacking || this.isBlocking || this.stunned > 0) return false;
         
         // Solar beam requires full boost
         if (type === AttackType.SOLAR_BEAM) {
             if (this.boostMeter < this.maxBoost) return false;
+            if (this.characterType !== CharacterType.SOLAR) return false;
             this.boostMeter = 0; // Use up the boost
+        }
+        
+        // Earthquake requires full boost
+        if (type === AttackType.EARTHQUAKE) {
+            if (this.boostMeter < this.maxBoost) return false;
+            if (this.characterType !== CharacterType.EARTH) return false;
+            this.boostMeter = 0; // Use up the boost
+            this.earthquakePhase = 1; // Start jumping
+            this.velocityY = -20; // High jump
         }
         
         this.isAttacking = true;
@@ -889,9 +1019,8 @@ class Fighter {
     }
     
     addBoost(amount) {
-        if (this.isPlayer) {
-            this.boostMeter = Math.min(this.maxBoost, this.boostMeter + amount);
-        }
+        // Both player and enemy can gain boost now
+        this.boostMeter = Math.min(this.maxBoost, this.boostMeter + amount);
     }
     
     checkHit(opponent) {
@@ -900,9 +1029,10 @@ class Fighter {
         const stats = this.attackStats[this.currentAttack];
         if (!stats) return null;
         
-        // Solar beam does continuous damage (resets canHit every few frames)
+        // Solar beam and earthquake do continuous damage (resets canHit every few frames)
         const isSolarBeam = this.currentAttack === AttackType.SOLAR_BEAM;
-        if (isSolarBeam && this.attackFrame % 10 === 0) {
+        const isEarthquake = this.currentAttack === AttackType.EARTHQUAKE;
+        if ((isSolarBeam || isEarthquake) && this.attackFrame % 10 === 0) {
             this.canHit = true;
         }
         
@@ -915,6 +1045,12 @@ class Fighter {
         // Solar beam has a longer hit window
         if (isSolarBeam) {
             hitWindowStart = stats.duration * 0.15;
+            hitWindowEnd = stats.duration * 0.85;
+        }
+        
+        // Earthquake hits during ground slam phase
+        if (isEarthquake) {
+            hitWindowStart = stats.duration * 0.25;
             hitWindowEnd = stats.duration * 0.85;
         }
         
@@ -932,14 +1068,14 @@ class Fighter {
         if (this.boxCollision(atkBox, oppBox)) {
             this.canHit = false;
             
-            // Solar beam does smaller damage per tick but hits multiple times
-            let damage = isSolarBeam ? 8 : stats.damage;
+            // Solar beam and earthquake do smaller damage per tick but hits multiple times
+            let damage = (isSolarBeam || isEarthquake) ? 8 : stats.damage;
             let blocked = false;
             let isKO = this.currentAttack === AttackType.KO_STRIKE;
             let isFlyingKick = this.currentAttack === AttackType.FLYING_KICK;
             
-            // Check blocking - Solar beam CANNOT be blocked
-            if (opponent.isBlocking && !isKO && !isSolarBeam) {
+            // Check blocking - Solar beam and Earthquake CANNOT be blocked
+            if (opponent.isBlocking && !isKO && !isSolarBeam && !isEarthquake) {
                 damage = Math.floor(damage * 0.15);
                 blocked = true;
             } else if (opponent.isBlocking && isKO) {
@@ -947,8 +1083,8 @@ class Fighter {
                 blocked = true;
             }
             
-            // Randomness (less for solar beam)
-            if (!isSolarBeam) {
+            // Randomness (less for special attacks)
+            if (!isSolarBeam && !isEarthquake) {
                 damage += Math.floor(Math.random() * 5) - 2;
             }
             damage = Math.max(1, damage);
@@ -959,7 +1095,8 @@ class Fighter {
                 attackType: this.currentAttack,
                 isKO,
                 isFlyingKick,
-                isSolarBeam
+                isSolarBeam,
+                isEarthquake
             };
         }
         
@@ -1340,6 +1477,9 @@ class Fighter {
             case AttackType.SOLAR_BEAM:
                 this.drawSolarBeamEffect(centerX, effectAlpha);
                 break;
+            case AttackType.EARTHQUAKE:
+                this.drawEarthquakeEffect(centerX, effectAlpha);
+                break;
         }
         
         ctx.restore();
@@ -1608,6 +1748,156 @@ class Fighter {
         ctx.globalAlpha = 1;
         ctx.restore();
     }
+    
+    drawEarthquakeEffect(centerX, alpha) {
+        const stats = this.attackStats[AttackType.EARTHQUAKE];
+        const progress = this.attackFrame / stats.duration;
+        const groundY = canvas.height * GROUND_Y;
+        
+        ctx.save();
+        
+        // Phase 1: Charging/Jump (0 - 0.20)
+        if (progress < 0.20) {
+            const chargeProgress = progress / 0.20;
+            
+            // Energy gathering at feet
+            const orbRadius = 15 + chargeProgress * 25;
+            const gradient = ctx.createRadialGradient(centerX, groundY - 10, 0, centerX, groundY - 10, orbRadius);
+            gradient.addColorStop(0, 'rgba(139, 90, 43, 1)');
+            gradient.addColorStop(0.5, 'rgba(101, 67, 33, 0.8)');
+            gradient.addColorStop(1, 'rgba(60, 40, 20, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(centerX, groundY - 10, orbRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Dust particles rising
+            for (let i = 0; i < 10; i++) {
+                const angle = (i / 10) * Math.PI * 2 + this.attackFrame * 0.1;
+                const dist = 30 + chargeProgress * 40;
+                const px = centerX + Math.cos(angle) * dist;
+                const py = groundY - 10 - chargeProgress * 30 + Math.sin(this.attackFrame * 0.2) * 5;
+                
+                ctx.fillStyle = `rgba(139, 90, 43, ${alpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(px, py, 3 + Math.random() * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // Phase 2: Slam impact (0.20 - 0.35)
+        else if (progress < 0.35) {
+            const impactProgress = (progress - 0.20) / 0.15;
+            
+            // Impact shockwave
+            const waveRadius = impactProgress * canvas.width * 0.8;
+            const waveWidth = 30 - impactProgress * 20;
+            
+            ctx.strokeStyle = `rgba(139, 90, 43, ${(1 - impactProgress) * 0.8})`;
+            ctx.lineWidth = waveWidth;
+            ctx.beginPath();
+            ctx.arc(centerX, groundY, waveRadius, Math.PI, 0);
+            ctx.stroke();
+            
+            // Ground crack lines radiating outward
+            ctx.strokeStyle = `rgba(60, 40, 20, ${(1 - impactProgress * 0.5) * alpha})`;
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI - Math.PI / 2;
+                const length = impactProgress * 200 + Math.random() * 50;
+                ctx.beginPath();
+                ctx.moveTo(centerX, groundY);
+                ctx.lineTo(
+                    centerX + Math.cos(angle) * length,
+                    groundY + Math.sin(angle) * Math.abs(Math.sin(angle)) * length * 0.3
+                );
+                ctx.stroke();
+            }
+            
+            // Debris flying up
+            for (let i = 0; i < 20; i++) {
+                const debrisX = centerX + (Math.random() - 0.5) * waveRadius * 2;
+                const debrisY = groundY - impactProgress * 100 * Math.random();
+                const size = 4 + Math.random() * 8;
+                
+                ctx.fillStyle = `rgba(${80 + Math.random() * 60}, ${50 + Math.random() * 40}, ${20 + Math.random() * 30}, ${alpha * 0.9})`;
+                ctx.beginPath();
+                ctx.arc(debrisX, debrisY, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // Phase 3: Ground shaking (0.35 - 0.85)
+        else if (progress < 0.85) {
+            const shakeProgress = (progress - 0.35) / 0.50;
+            const shakeIntensity = 1 - shakeProgress;
+            
+            // Shaking ground waves
+            ctx.strokeStyle = `rgba(139, 90, 43, ${shakeIntensity * 0.6})`;
+            ctx.lineWidth = 4;
+            
+            for (let w = 0; w < 3; w++) {
+                const waveOffset = (this.attackFrame * 8 + w * 100) % canvas.width;
+                ctx.beginPath();
+                for (let x = 0; x < canvas.width; x += 10) {
+                    const waveY = groundY + Math.sin((x + waveOffset) * 0.05) * 8 * shakeIntensity;
+                    if (x === 0) ctx.moveTo(x, waveY);
+                    else ctx.lineTo(x, waveY);
+                }
+                ctx.stroke();
+            }
+            
+            // Rock debris falling
+            for (let i = 0; i < 15 * shakeIntensity; i++) {
+                const debrisX = Math.random() * canvas.width;
+                const debrisY = groundY - 20 + Math.random() * 30;
+                const size = 2 + Math.random() * 5;
+                
+                ctx.fillStyle = `rgba(100, 70, 40, ${shakeIntensity * 0.7})`;
+                ctx.beginPath();
+                ctx.arc(debrisX, debrisY, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Dust clouds
+            for (let i = 0; i < 8; i++) {
+                const cloudX = (i / 8) * canvas.width;
+                const cloudY = groundY - 10 + Math.sin(this.attackFrame * 0.3 + i) * 10;
+                const cloudSize = 30 + shakeIntensity * 40;
+                
+                const dustGradient = ctx.createRadialGradient(cloudX, cloudY, 0, cloudX, cloudY, cloudSize);
+                dustGradient.addColorStop(0, `rgba(139, 90, 43, ${shakeIntensity * 0.3})`);
+                dustGradient.addColorStop(1, 'rgba(139, 90, 43, 0)');
+                
+                ctx.fillStyle = dustGradient;
+                ctx.beginPath();
+                ctx.arc(cloudX, cloudY, cloudSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // Phase 4: Settling (0.85 - 1.0)
+        else {
+            const settleProgress = (progress - 0.85) / 0.15;
+            const fadeAlpha = (1 - settleProgress) * alpha;
+            
+            // Fading dust
+            for (let i = 0; i < 5; i++) {
+                const cloudX = (i / 5) * canvas.width + canvas.width * 0.1;
+                const cloudY = groundY - 20 - settleProgress * 30;
+                const cloudSize = 25 * (1 - settleProgress);
+                
+                const dustGradient = ctx.createRadialGradient(cloudX, cloudY, 0, cloudX, cloudY, cloudSize);
+                dustGradient.addColorStop(0, `rgba(139, 90, 43, ${fadeAlpha * 0.2})`);
+                dustGradient.addColorStop(1, 'rgba(139, 90, 43, 0)');
+                
+                ctx.fillStyle = dustGradient;
+                ctx.beginPath();
+                ctx.arc(cloudX, cloudY, cloudSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.restore();
+    }
 }
 
 // Enemy AI Class
@@ -1643,6 +1933,13 @@ class EnemyAI {
     
     makeDecision(player, distance, isPlayerAttacking, playerHealth, myHealth) {
         const rand = Math.random();
+        
+        // Use special attack if boost is full and decent chance
+        if (this.fighter.boostMeter >= 100 && rand < 0.4) {
+            this.currentAction = 'special_attack';
+            this.actionCooldown = 80;
+            return;
+        }
         
         // React to player attacks
         if (isPlayerAttacking && distance < 150) {
@@ -1793,6 +2090,12 @@ class EnemyAI {
                 this.fighter.isBlocking = false;
                 break;
                 
+            case 'special_attack':
+                // Use the fighter's special attack (SOLAR_BEAM or EARTHQUAKE)
+                this.fighter.attack(this.fighter.specialAttack);
+                this.fighter.isBlocking = false;
+                break;
+                
             case 'block':
                 this.fighter.isBlocking = true;
                 this.fighter.velocityX *= 0.5;
@@ -1833,8 +2136,23 @@ class Game {
         canvas.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent right-click menu
         
         // Button handlers
-        document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+        document.getElementById('start-btn').addEventListener('click', () => this.showCharacterSelect());
         document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
+        
+        // Character selection handlers
+        document.getElementById('char-solar').addEventListener('click', () => this.selectCharacter(CharacterType.SOLAR));
+        document.getElementById('char-earth').addEventListener('click', () => this.selectCharacter(CharacterType.EARTH));
+    }
+    
+    showCharacterSelect() {
+        document.getElementById('title-screen').classList.add('hidden');
+        document.getElementById('character-select').classList.remove('hidden');
+    }
+    
+    selectCharacter(type) {
+        selectedCharacter = type;
+        document.getElementById('character-select').classList.add('hidden');
+        this.startGame();
     }
     
     resizeCanvas() {
@@ -1867,10 +2185,11 @@ class Game {
             this.player.attack(AttackType.UPPERCUT);
         }
         if (key === 'r' && this.player) {
-            // Solar Beam (requires full boost meter)
+            // Special attack (requires full boost meter)
             if (this.player.boostMeter >= 100) {
-                this.player.attack(AttackType.SOLAR_BEAM);
-                this.showCombatText('SOLAR BEAM!');
+                this.player.attack(this.player.specialAttack);
+                const attackName = this.player.characterType === CharacterType.SOLAR ? 'SOLAR BEAM!' : 'EARTHQUAKE!';
+                this.showCombatText(attackName);
             }
         }
     }
@@ -1929,8 +2248,12 @@ class Game {
     }
     
     startGame() {
-        document.getElementById('title-screen').classList.add('hidden');
+        document.getElementById('character-select').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
+        
+        // Update boost label based on character type
+        const boostLabel = document.getElementById('boost-label');
+        boostLabel.textContent = selectedCharacter === CharacterType.SOLAR ? 'SOLAR BEAM' : 'EARTHQUAKE';
         
         this.resetFightersForIntro();
         gameState = GameState.INTRO;
@@ -1941,9 +2264,13 @@ class Game {
     }
     
     resetFightersForIntro() {
+        // Player uses selected character, enemy uses the other
+        const playerType = selectedCharacter;
+        const enemyType = selectedCharacter === CharacterType.SOLAR ? CharacterType.EARTH : CharacterType.SOLAR;
+        
         // Start fighters at edges of screen
-        this.player = new Fighter(-80, true);  // Off-screen left
-        this.enemy = new Fighter(canvas.width + 20, false);  // Off-screen right
+        this.player = new Fighter(-80, true, playerType);  // Off-screen left
+        this.enemy = new Fighter(canvas.width + 20, false, enemyType);  // Off-screen right
         this.enemy.facingRight = false;
         this.enemyAI = new EnemyAI(this.enemy);
         
@@ -2017,20 +2344,17 @@ class Game {
     
     restartGame() {
         document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('game-screen').classList.remove('hidden');
-        
         this.round = 1;
-        this.resetFightersForIntro();
-        gameState = GameState.INTRO;
-        this.introTimer = 0;
-        this.introPhase = 'walk';
-        
-        this.introLoop();
+        this.showCharacterSelect();
     }
     
     resetFighters() {
-        this.player = new Fighter(canvas.width * 0.25, true);
-        this.enemy = new Fighter(canvas.width * 0.65, false);
+        // Player uses selected character, enemy uses the other
+        const playerType = selectedCharacter;
+        const enemyType = selectedCharacter === CharacterType.SOLAR ? CharacterType.EARTH : CharacterType.SOLAR;
+        
+        this.player = new Fighter(canvas.width * 0.25, true, playerType);
+        this.enemy = new Fighter(canvas.width * 0.65, false, enemyType);
         this.enemy.facingRight = false;
         this.enemyAI = new EnemyAI(this.enemy);
         
@@ -2114,27 +2438,30 @@ class Game {
         // Player attacks enemy
         const playerHit = this.player.checkHit(this.enemy);
         if (playerHit) {
-            // Solar beam has reduced knockback since it hits multiple times
-            const knockbackMultiplier = playerHit.isSolarBeam ? 0.2 : 1;
+            // Special attacks have reduced knockback since they hit multiple times
+            const knockbackMultiplier = (playerHit.isSolarBeam || playerHit.isEarthquake) ? 0.2 : 1;
             this.enemy.takeDamage(playerHit.damage, this.player.centerX < this.enemy.centerX, playerHit.isKO, knockbackMultiplier);
             this.spawnHitParticles(this.enemy.centerX, this.enemy.centerY, playerHit.attackType);
             this.spawnDamageNumber(this.enemy.centerX, this.enemy.y, playerHit.damage, playerHit.attackType, playerHit.blocked);
             
             // Less screen shake for solar beam continuous hits
-            if (!playerHit.isSolarBeam) {
+            if (!playerHit.isSolarBeam && !playerHit.isEarthquake) {
                 this.screenShake(playerHit.isKO ? 2 : 1);
             }
             
-            // Add boost for successful hits
-            if (!playerHit.blocked && !playerHit.isSolarBeam) {
-                this.player.addBoost(20);
+            // Add boost for successful hits (10 per hit = 10 hits for full meter)
+            if (!playerHit.blocked && !playerHit.isSolarBeam && !playerHit.isEarthquake) {
+                this.player.addBoost(10);
                 this.updateBoostMeter();
             }
             
-            // Show combat text only once for solar beam
+            // Show combat text only once for special attacks
             if (playerHit.isSolarBeam && this.player.attackFrame < 30) {
                 this.showCombatText('SOLAR BEAM!');
                 this.screenShake(2);
+            } else if (playerHit.isEarthquake && this.player.attackFrame < 30) {
+                this.showCombatText('EARTHQUAKE!');
+                this.screenShake(3);
             } else if (playerHit.isKO) {
                 this.showCombatText('KO STRIKE!');
             } else if (playerHit.isFlyingKick) {
@@ -2151,12 +2478,18 @@ class Game {
         // Enemy attacks player
         const enemyHit = this.enemy.checkHit(this.player);
         if (enemyHit) {
-            const knockbackMultiplier = enemyHit.isSolarBeam ? 0.2 : 1;
+            const knockbackMultiplier = (enemyHit.isSolarBeam || enemyHit.isEarthquake) ? 0.2 : 1;
             this.player.takeDamage(enemyHit.damage, this.enemy.centerX < this.player.centerX, enemyHit.isKO, knockbackMultiplier);
             this.spawnHitParticles(this.player.centerX, this.player.centerY, enemyHit.attackType);
             this.spawnDamageNumber(this.player.centerX, this.player.y, enemyHit.damage, enemyHit.attackType, enemyHit.blocked);
-            if (!enemyHit.isSolarBeam) {
+            
+            if (!enemyHit.isSolarBeam && !enemyHit.isEarthquake) {
                 this.screenShake(enemyHit.isKO ? 2 : 1);
+            }
+            
+            // Add boost for enemy on successful hits (10 per hit = 10 hits for full meter)
+            if (!enemyHit.blocked && !enemyHit.isSolarBeam && !enemyHit.isEarthquake) {
+                this.enemy.addBoost(10);
             }
         }
     }
