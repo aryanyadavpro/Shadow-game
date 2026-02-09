@@ -1,0 +1,447 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+@font-face {
+    font-family: 'Shadow Font';
+    src: local('Arial Black');
+}
+
+body {
+    background: #000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: linear-gradient(180deg, #4a4a5e 0%, #3a3a4e 50%, #2a2a3a 100%);
+}
+
+/* Title Screen */
+#title-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background: radial-gradient(ellipse at center, #4a4a5e 0%, #2a2a3a 70%);
+    animation: pulse-bg 4s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+    0%, 100% { background: radial-gradient(ellipse at center, #4a4a5e 0%, #2a2a3a 70%); }
+    50% { background: radial-gradient(ellipse at center, #5a5a6e 0%, #3a3a4a 70%); }
+}
+
+.game-title {
+    font-size: 5rem;
+    font-weight: 900;
+    color: transparent;
+    background: linear-gradient(180deg, #fff 0%, #666 50%, #333 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.3),
+                 0 0 80px rgba(255, 255, 255, 0.1);
+    letter-spacing: 15px;
+    animation: title-glow 3s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3)); }
+    50% { filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.5)); }
+}
+
+.subtitle {
+    color: #555;
+    font-size: 1.2rem;
+    letter-spacing: 8px;
+    margin-top: 10px;
+    text-transform: uppercase;
+}
+
+.shadow-btn {
+    margin-top: 50px;
+    padding: 20px 60px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    letter-spacing: 5px;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border: 2px solid #444;
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.shadow-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.shadow-btn:hover {
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+    border-color: #666;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+    transform: scale(1.05);
+}
+
+.shadow-btn:hover::before {
+    left: 100%;
+}
+
+.shadow-btn:active {
+    transform: scale(0.98);
+}
+
+.controls-info {
+    margin-top: 50px;
+    text-align: center;
+    color: #444;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 30px;
+    max-width: 500px;
+}
+
+.controls-info h3 {
+    grid-column: 1 / -1;
+    color: #666;
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+    font-size: 1rem;
+}
+
+.controls-info p {
+    margin: 5px 0;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.key {
+    display: inline-block;
+    background: linear-gradient(180deg, #333 0%, #222 100%);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    margin-right: 8px;
+    min-width: 50px;
+    text-align: center;
+    color: #888;
+    font-weight: bold;
+    font-size: 0.75rem;
+}
+
+/* Game Screen */
+#game-screen {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+#game-screen.hidden,
+#title-screen.hidden,
+#result-screen.hidden {
+    display: none;
+}
+
+/* HUD */
+#hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 40px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+    z-index: 10;
+}
+
+.health-container {
+    width: 35%;
+}
+
+.player-health-container {
+    text-align: left;
+}
+
+.enemy-health-container {
+    text-align: right;
+}
+
+.fighter-name {
+    color: #888;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.health-bar {
+    height: 25px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border: 2px solid #333;
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.health-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.player-fill {
+    background: linear-gradient(180deg, #4a4a6a 0%, #2a2a4a 50%, #1a1a3a 100%);
+    box-shadow: 0 0 20px rgba(100, 100, 150, 0.5),
+                inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.enemy-fill {
+    background: linear-gradient(180deg, #6a3a3a 0%, #4a1a1a 50%, #3a0a0a 100%);
+    box-shadow: 0 0 20px rgba(150, 50, 50, 0.5),
+                inset 0 0 10px rgba(255, 255, 255, 0.1);
+    float: right;
+}
+
+.health-bar span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #aaa;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-shadow: 0 0 5px #000, 0 0 5px #000;
+    letter-spacing: 2px;
+}
+
+.round-indicator {
+    text-align: center;
+    padding: 10px 30px;
+}
+
+#round-text {
+    color: #666;
+    font-size: 1rem;
+    letter-spacing: 5px;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+/* Boost Attack Meter */
+#boost-container {
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 20;
+}
+
+.boost-label {
+    color: #ffaa00;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 15px rgba(255, 170, 0, 0.8);
+}
+
+.boost-meter {
+    width: 40px;
+    height: 200px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border: 2px solid #333;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(255, 170, 0, 0.2);
+}
+
+.boost-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(180deg, 
+        #ffff00 0%, 
+        #ffaa00 30%, 
+        #ff6600 60%, 
+        #ff3300 100%);
+    border-radius: 0 0 18px 18px;
+    transition: height 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.8),
+                inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.boost-fill.full {
+    animation: boost-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes boost-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 170, 0, 0.8); }
+    50% { box-shadow: 0 0 40px rgba(255, 255, 0, 1), 0 0 60px rgba(255, 170, 0, 0.8); }
+}
+
+.boost-meter span {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-shadow: 0 0 5px #000;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.boost-ready {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background: linear-gradient(180deg, #ffaa00 0%, #ff6600 100%);
+    color: #000;
+    font-weight: bold;
+    font-size: 0.8rem;
+    border-radius: 5px;
+    animation: ready-flash 0.5s ease-in-out infinite;
+}
+
+.boost-ready.hidden {
+    display: none;
+}
+
+@keyframes ready-flash {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 170, 0, 0.8); }
+    50% { transform: scale(1.1); box-shadow: 0 0 40px rgba(255, 255, 0, 1); }
+}
+
+/* Canvas */
+#game-canvas {
+    flex: 1;
+    display: block;
+    cursor: crosshair;
+}
+
+/* Combat Text */
+#combat-text {
+    position: absolute;
+    bottom: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.8),
+                 0 0 60px rgba(255, 255, 255, 0.4);
+    letter-spacing: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+#combat-text.show {
+    opacity: 1;
+    animation: combat-flash 0.5s ease-out;
+}
+
+@keyframes combat-flash {
+    0% { transform: translateX(-50%) scale(1.5); opacity: 0; }
+    50% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* Result Screen */
+#result-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #000 70%);
+    z-index: 100;
+}
+
+#result-text {
+    font-size: 4rem;
+    font-weight: 900;
+    color: transparent;
+    background: linear-gradient(180deg, #fff 0%, #888 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    letter-spacing: 10px;
+    text-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
+}
+
+#result-subtitle {
+    color: #555;
+    font-size: 1.2rem;
+    letter-spacing: 5px;
+    margin-top: 20px;
+}
+
+/* Damage Numbers */
+.damage-number {
+    position: absolute;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ff4444;
+    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+    pointer-events: none;
+    animation: damage-float 1s ease-out forwards;
+}
+
+.damage-number.power {
+    font-size: 2.5rem;
+    color: #ff8800;
+    text-shadow: 0 0 20px #ff4400, 0 0 40px #ff4400;
+}
+
+.damage-number.blocked {
+    color: #4488ff;
+    text-shadow: 0 0 10px #0044ff, 0 0 20px #0044ff;
+}
+
+@keyframes damage-float {
+    0% { transform: translateY(0) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
+}
+
+/* Screen shake */
+.shake {
+    animation: screen-shake 0.3s ease-in-out;
+}
+
+@keyframes screen-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+}
