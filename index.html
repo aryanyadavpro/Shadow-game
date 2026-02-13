@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Shadow Combat</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -85,6 +88,30 @@
             </div>
             <canvas id="game-canvas"></canvas>
             <div id="combat-text"></div>
+            
+            <!-- Touch Controls for Mobile -->
+            <div id="touch-controls">
+                <!-- Left side: Movement joystick/buttons -->
+                <div class="touch-left">
+                    <div class="d-pad">
+                        <button class="d-pad-btn d-pad-up" data-key="w">▲</button>
+                        <button class="d-pad-btn d-pad-left" data-key="a">◀</button>
+                        <button class="d-pad-btn d-pad-center" data-key="s">■</button>
+                        <button class="d-pad-btn d-pad-right" data-key="d">▶</button>
+                    </div>
+                </div>
+                
+                <!-- Right side: Attack buttons -->
+                <div class="touch-right">
+                    <div class="attack-buttons">
+                        <button class="attack-btn attack-slash" data-attack="slash">⚔</button>
+                        <button class="attack-btn attack-power" data-attack="power">💥</button>
+                        <button class="attack-btn attack-kick" data-attack="kick">🦶</button>
+                        <button class="attack-btn attack-uppercut" data-attack="uppercut">⬆</button>
+                        <button class="attack-btn attack-special" data-attack="special">★</button>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div id="result-screen" class="hidden">

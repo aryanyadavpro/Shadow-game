@@ -289,9 +289,11 @@ body {
 /* Game Screen */
 #game-screen {
     height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow: hidden;
 }
 
 #game-screen.hidden,
@@ -480,14 +482,17 @@ body {
     flex: 1;
     display: block;
     cursor: crosshair;
+    width: 100%;
+    min-height: 300px;
+    background: #0a0a0f;
 }
 
 /* Combat Text */
 #combat-text {
     position: absolute;
-    bottom: 30%;
+    top: 40%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     font-size: 2rem;
     font-weight: bold;
     color: #fff;
@@ -497,6 +502,7 @@ body {
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
+    z-index: 30;
 }
 
 #combat-text.show {
@@ -505,9 +511,9 @@ body {
 }
 
 @keyframes combat-flash {
-    0% { transform: translateX(-50%) scale(1.5); opacity: 0; }
-    50% { transform: translateX(-50%) scale(1.1); opacity: 1; }
-    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    0% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 /* Result Screen */
@@ -581,4 +587,317 @@ body {
     40% { transform: translateX(10px); }
     60% { transform: translateX(-5px); }
     80% { transform: translateX(5px); }
+}
+
+/* ==================== TOUCH CONTROLS FOR MOBILE ==================== */
+#touch-controls {
+    display: none; /* Hidden by default, shown on touch devices */
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    pointer-events: none;
+    z-index: 50;
+}
+
+/* Show touch controls on touch devices */
+@media (pointer: coarse), (max-width: 1024px) {
+    #game-screen {
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile browsers */
+    }
+    
+    #touch-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 10px 15px 20px;
+        background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    }
+    
+    /* Adjust boost meter position on mobile */
+    #boost-container {
+        right: 10px;
+        top: 100px;
+        transform: none;
+    }
+    
+    .boost-meter {
+        width: 30px;
+        height: 120px;
+    }
+    
+    .boost-label {
+        font-size: 0.6rem;
+        letter-spacing: 1px;
+    }
+    
+    /* Let JS handle canvas sizing */
+    #game-canvas {
+        flex: 1;
+        min-height: 200px;
+    }
+    
+    /* Adjust HUD for mobile */
+    #hud {
+        padding: 10px 15px;
+        flex-shrink: 0;
+    }
+    
+    .health-container {
+        width: 38%;
+    }
+    
+    .health-bar {
+        height: 20px;
+    }
+    
+    .fighter-name {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+    }
+    
+    .health-bar span {
+        font-size: 0.6rem;
+    }
+    
+    #round-text {
+        font-size: 0.8rem;
+    }
+    
+    /* Combat text adjustment for mobile */
+    #combat-text {
+        font-size: 1.5rem;
+        letter-spacing: 5px;
+    }
+}
+
+.touch-left, .touch-right {
+    pointer-events: auto;
+}
+
+/* D-Pad for movement */
+.d-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(3, 60px);
+    gap: 4px;
+    padding: 5px;
+}
+
+.d-pad-btn {
+    width: 58px;
+    height: 58px;
+    background: linear-gradient(180deg, rgba(60, 60, 80, 0.9) 0%, rgba(30, 30, 50, 0.95) 100%);
+    border: 2px solid rgba(100, 100, 130, 0.6);
+    border-radius: 12px;
+    color: #aaa;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.1s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.d-pad-btn:active, .d-pad-btn.active {
+    background: linear-gradient(180deg, rgba(80, 80, 120, 0.95) 0%, rgba(50, 50, 80, 0.95) 100%);
+    border-color: rgba(150, 150, 200, 0.8);
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+                inset 0 0 10px rgba(100, 100, 200, 0.3);
+}
+
+.d-pad-up { grid-column: 2; grid-row: 1; }
+.d-pad-left { grid-column: 1; grid-row: 2; }
+.d-pad-center { grid-column: 2; grid-row: 2; font-size: 16px; }
+.d-pad-right { grid-column: 3; grid-row: 2; }
+
+/* Attack Buttons */
+.attack-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    max-width: 200px;
+}
+
+.attack-btn {
+    width: 65px;
+    height: 65px;
+    background: linear-gradient(180deg, rgba(80, 40, 40, 0.9) 0%, rgba(40, 20, 20, 0.95) 100%);
+    border: 2px solid rgba(150, 80, 80, 0.6);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.1s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.attack-btn:active, .attack-btn.active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5),
+                inset 0 0 15px rgba(255, 100, 100, 0.4);
+}
+
+.attack-slash {
+    background: linear-gradient(180deg, rgba(100, 100, 130, 0.9) 0%, rgba(50, 50, 70, 0.95) 100%);
+    border-color: rgba(120, 120, 160, 0.7);
+}
+
+.attack-power {
+    background: linear-gradient(180deg, rgba(150, 80, 30, 0.9) 0%, rgba(80, 40, 15, 0.95) 100%);
+    border-color: rgba(200, 120, 60, 0.7);
+}
+
+.attack-kick {
+    background: linear-gradient(180deg, rgba(30, 100, 130, 0.9) 0%, rgba(15, 50, 70, 0.95) 100%);
+    border-color: rgba(60, 150, 200, 0.7);
+}
+
+.attack-uppercut {
+    background: linear-gradient(180deg, rgba(80, 130, 80, 0.9) 0%, rgba(40, 70, 40, 0.95) 100%);
+    border-color: rgba(100, 180, 100, 0.7);
+}
+
+.attack-special {
+    background: linear-gradient(180deg, rgba(170, 130, 30, 0.9) 0%, rgba(100, 70, 10, 0.95) 100%);
+    border-color: rgba(255, 200, 60, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6),
+                0 0 15px rgba(255, 170, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.attack-special:active, .attack-special.active {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5),
+                0 0 25px rgba(255, 200, 0, 0.6),
+                inset 0 0 20px rgba(255, 200, 100, 0.5);
+}
+
+/* Mobile-friendly character selection */
+@media (max-width: 700px) {
+    .character-options {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .character-card {
+        width: 90vw;
+        max-width: 300px;
+        padding: 15px;
+    }
+    
+    .select-title {
+        font-size: 1.8rem;
+        letter-spacing: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .char-preview {
+        width: 100px;
+        height: 120px;
+        margin-bottom: 10px;
+    }
+    
+    .character-card h2 {
+        font-size: 1.1rem;
+    }
+    
+    .char-desc {
+        font-size: 0.75rem;
+    }
+    
+    .controls-info {
+        display: none; /* Hide keyboard controls info on mobile */
+    }
+    
+    .game-title {
+        font-size: 2.5rem;
+        letter-spacing: 8px;
+    }
+    
+    .subtitle {
+        font-size: 0.9rem;
+        letter-spacing: 4px;
+    }
+    
+    .shadow-btn {
+        padding: 15px 40px;
+        font-size: 1rem;
+        letter-spacing: 3px;
+    }
+    
+    #result-text {
+        font-size: 2.5rem;
+    }
+    
+    #result-subtitle {
+        font-size: 1rem;
+    }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+    #touch-controls {
+        height: 140px;
+        padding: 5px 15px 10px;
+    }
+    
+    .d-pad {
+        grid-template-columns: repeat(3, 42px);
+        grid-template-rows: repeat(3, 42px);
+        gap: 2px;
+    }
+    
+    .d-pad-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .attack-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .attack-buttons {
+        max-width: 180px;
+    }
+    
+    #hud {
+        padding: 5px 15px;
+    }
+    
+    .health-bar {
+        height: 15px;
+    }
+    
+    .fighter-name {
+        font-size: 0.6rem;
+        margin-bottom: 3px;
+    }
+    
+    #boost-container {
+        top: 80px;
+    }
+    
+    .boost-meter {
+        height: 80px;
+        width: 25px;
+    }
 }

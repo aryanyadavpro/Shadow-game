@@ -2128,12 +2128,20 @@ class Game {
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
         
+        // Handle mobile browser viewport changes (address bar showing/hiding)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => this.resizeCanvas());
+        }
+        
         // Input handlers
         window.addEventListener('keydown', (e) => this.handleKeyDown(e));
         window.addEventListener('keyup', (e) => this.handleKeyUp(e));
         canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         canvas.addEventListener('mouseup', () => this.handleMouseUp());
         canvas.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent right-click menu
+        
+        // Touch controls setup
+        this.setupTouchControls();
         
         // Button handlers
         document.getElementById('start-btn').addEventListener('click', () => this.showCharacterSelect());
@@ -2142,6 +2150,134 @@ class Game {
         // Character selection handlers
         document.getElementById('char-solar').addEventListener('click', () => this.selectCharacter(CharacterType.SOLAR));
         document.getElementById('char-earth').addEventListener('click', () => this.selectCharacter(CharacterType.EARTH));
+    }
+    
+    setupTouchControls() {
+        // Track active touches for multi-touch support
+        this.activeTouches = new Map();
+        
+        // D-Pad buttons
+        const dpadBtns = document.querySelectorAll('.d-pad-btn');
+        dpadBtns.forEach(btn => {
+            const key = btn.dataset.key;
+            
+            // Touch start
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState !== GameState.PLAYING) return;
+                btn.classList.add('active');
+                if (key in keys) {
+                    keys[key] = true;
+                }
+                // Jump on w button
+                if (key === 'w' && this.player && this.player.isGrounded) {
+                    this.player.velocityY = this.player.jumpForce;
+                }
+            }, { passive: false });
+            
+            // Touch end
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+                if (key in keys) {
+                    keys[key] = false;
+                }
+            }, { passive: false });
+            
+            // Touch cancel
+            btn.addEventListener('touchcancel', (e) => {
+                btn.classList.remove('active');
+                if (key in keys) {
+                    keys[key] = false;
+                }
+            });
+            
+            // Handle touch leaving the button
+            btn.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const rect = btn.getBoundingClientRect();
+                const isInside = touch.clientX >= rect.left && 
+                                 touch.clientX <= rect.right && 
+                                 touch.clientY >= rect.top && 
+                                 touch.clientY <= rect.bottom;
+                
+                if (!isInside) {
+                    btn.classList.remove('active');
+                    if (key in keys) {
+                        keys[key] = false;
+                    }
+                }
+            }, { passive: true });
+        });
+        
+        // Attack buttons
+        const attackBtns = document.querySelectorAll('.attack-btn');
+        attackBtns.forEach(btn => {
+            const attackType = btn.dataset.attack;
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState !== GameState.PLAYING || !this.player) return;
+                btn.classList.add('active');
+                
+                switch (attackType) {
+                    case 'slash':
+                        this.player.attack(AttackType.SLASH);
+                        break;
+                    case 'power':
+                        this.player.attack(AttackType.POWER_SLASH);
+                        break;
+                    case 'kick':
+                        this.player.attack(AttackType.FLYING_KICK);
+                        break;
+                    case 'uppercut':
+                        this.player.attack(AttackType.UPPERCUT);
+                        break;
+                    case 'special':
+                        if (this.player.boostMeter >= 100) {
+                            this.player.attack(this.player.specialAttack);
+                            const attackName = this.player.characterType === CharacterType.SOLAR ? 'SOLAR BEAM!' : 'EARTHQUAKE!';
+                            this.showCombatText(attackName);
+                        }
+                        break;
+                }
+            }, { passive: false });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+            }, { passive: false });
+            
+            btn.addEventListener('touchcancel', () => {
+                btn.classList.remove('active');
+            });
+        });
+        
+        // Prevent default touch behavior on canvas to avoid scrolling
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Handle touch on canvas for attacks (tap to slash)
+        canvas.addEventListener('touchend', (e) => {
+            if (gameState !== GameState.PLAYING || !this.player) return;
+            if (this.player.isAttacking) return;
+            
+            // Simple tap on canvas = slash attack
+            // Check if it wasn't a touch control button
+            const touch = e.changedTouches[0];
+            const touchControls = document.getElementById('touch-controls');
+            const rect = touchControls.getBoundingClientRect();
+            
+            // If touch was in the touch controls area, ignore
+            if (touch.clientY > rect.top) return;
+            
+            this.player.attack(AttackType.SLASH);
+        });
     }
     
     showCharacterSelect() {
@@ -2156,8 +2292,31 @@ class Game {
     }
     
     resizeCanvas() {
+        const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 1024;
         canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - 100;
+        
+        // Get actual available height
+        const gameScreen = document.getElementById('game-screen');
+        const hud = document.getElementById('hud');
+        const touchControls = document.getElementById('touch-controls');
+        
+        let hudHeight = hud ? hud.offsetHeight : 80;
+        let touchHeight = 0;
+        
+        if (isMobile && touchControls) {
+            touchHeight = 200; // Touch controls height
+            if (window.innerHeight < 500) {
+                touchHeight = 140; // Reduced for landscape
+            }
+        }
+        
+        // Calculate canvas height - use visual viewport if available
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        canvas.height = Math.max(200, viewportHeight - hudHeight - touchHeight - 20);
+        
+        // Ensure proper sizing
+        canvas.style.width = '100%';
+        canvas.style.height = canvas.height + 'px';
     }
     
     handleKeyDown(e) {
